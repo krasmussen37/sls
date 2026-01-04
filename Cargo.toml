@@ -1,0 +1,72 @@
+[package]
+name = "sls"
+version = "0.1.0"
+edition = "2021"
+description = "System Log Search - Index and search system logs, agent stderr, and application logs"
+authors = ["SLS Team"]
+license = "MIT"
+
+[[bin]]
+name = "sls"
+path = "src/main.rs"
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive", "env"] }
+
+# Database
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# Full-text search
+tantivy = "0.22"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Error handling
+thiserror = "1"
+anyhow = "1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# File watching (for --watch mode)
+notify = "6"
+
+# Directory handling
+dirs = "5"
+
+# Glob patterns
+glob = "0.3"
+
+# Regex
+regex = "1"
+
+# Lazy initialization
+once_cell = "1"
+lazy_static = "1.4"
+
+# MCP Server - simple JSON-RPC implementation
+schemars = "1.0"
+
+# TUI
+ratatui = "0.29"
+crossterm = "0.28"
+
+[dev-dependencies]
+tempfile = "3"
+assert_cmd = "2"
+predicates = "3"
+
+[profile.release]
+opt-level = 3
+lto = true
