@@ -1,7 +1,7 @@
 # SLS (System Log Search)
 
 SLS indexes system and application logs so you can search, triage, and
-understand failures quickly. It is designed for local machines and agent
+understand failures quickly. It is designed for vps machines and agent
 workflows, with commands for discovery, coverage, and configuration.
 
 ## Quick start
