@@ -8,6 +8,8 @@
 //! - JsonConnector: Generic JSON/JSONL files
 
 pub mod agent_stderr;
+pub mod codex;
+pub mod gemini;
 pub mod journald;
 pub mod syslog;
 // Future connectors:

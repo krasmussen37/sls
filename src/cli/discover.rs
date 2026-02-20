@@ -160,14 +160,27 @@ pub fn discover_sources() -> Vec<DiscoveredSource> {
             });
         }
 
-        // Check Codex logs
-        let codex_logs = home.join(".codex").join("logs");
-        if codex_logs.exists() {
+        // Check Codex TUI log (~/.codex/log/codex-tui.log)
+        let codex_tui_log = home.join(".codex").join("log").join("codex-tui.log");
+        if codex_tui_log.exists() {
             sources.push(DiscoveredSource {
-                id: "codex-sessions".to_string(),
-                source_type: "agent_stderr".to_string(),
-                path: Some(codex_logs.to_string_lossy().to_string()),
-                description: "Codex session logs".to_string(),
+                id: "codex-tui".to_string(),
+                source_type: "codex".to_string(),
+                path: Some(codex_tui_log.to_string_lossy().to_string()),
+                description: "Codex CLI TUI log".to_string(),
+                confidence: 90,
+                selected: false,
+            });
+        }
+
+        // Check Gemini CLI session files (~/.gemini/tmp/)
+        let gemini_tmp = home.join(".gemini").join("tmp");
+        if gemini_tmp.exists() {
+            sources.push(DiscoveredSource {
+                id: "gemini-sessions".to_string(),
+                source_type: "gemini".to_string(),
+                path: Some(gemini_tmp.to_string_lossy().to_string()),
+                description: "Gemini CLI chat sessions".to_string(),
                 confidence: 88,
                 selected: false,
             });
