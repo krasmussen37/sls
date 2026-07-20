@@ -15,8 +15,8 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use crate::connectors::{
-    agent_stderr::AgentStderrConnector, journald::JournaldConnector, syslog::SyslogConnector,
-    Connector, LogEntry,
+    agent_stderr::AgentStderrConnector, codex::CodexConnector,
+    journald::JournaldConnector, syslog::SyslogConnector, Connector, LogEntry,
 };
 use crate::db::models::StoredLogEntry;
 use crate::db::Database;
@@ -533,6 +533,64 @@ mod tests {
         assert_eq!(cloned.last_indexed_timestamp, Some(1704067200));
         assert!(!cloned.background_running);
     }
+
+    #[tokio::test]
+    async fn test_codex_source_is_loaded_normalized_and_indexed() {
+        let temp = tempfile::tempdir().unwrap();
+        let codex_root = temp.path().join(".codex");
+        std::fs::create_dir_all(&codex_root).unwrap();
+        let codex_log_path = codex_root.join("logs_2.sqlite");
+        let codex_db = rusqlite::Connection::open(&codex_log_path).unwrap();
+        codex_db
+            .execute_batch(
+                r#"
+                CREATE TABLE logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ts INTEGER NOT NULL,
+                    ts_nanos INTEGER NOT NULL,
+                    level TEXT NOT NULL,
+                    target TEXT NOT NULL,
+                    feedback_log_body TEXT,
+                    module_path TEXT,
+                    file TEXT,
+                    line INTEGER,
+                    thread_id TEXT,
+                    process_uuid TEXT
+                );
+                INSERT INTO logs (ts, ts_nanos, level, target, feedback_log_body)
+                VALUES (1784553600, 100, 'WARN', 'codex_core::test', 'normalized warning');
+                "#,
+            )
+            .unwrap();
+        drop(codex_db);
+
+        let sls_db_path = temp.path().join("sls.db");
+        let sls_db = Database::open(&sls_db_path).unwrap();
+        sls_db
+            .conn()
+            .execute(
+                "INSERT INTO log_sources (source_type, source_path) VALUES ('codex', ?)",
+                [codex_root.to_string_lossy().as_ref()],
+            )
+            .unwrap();
+        drop(sls_db);
+
+        let indexer = Indexer::open(&sls_db_path).unwrap();
+        assert_eq!(indexer.sync_recent(100).await.unwrap(), 1);
+
+        let db = indexer.db.lock().unwrap();
+        let row: (String, String, String) = db
+            .conn()
+            .query_row(
+                "SELECT level, service, message FROM log_entries LIMIT 1",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(row.0, "WARN");
+        assert_eq!(row.1, "codex");
+        assert_eq!(row.2, "normalized warning");
+    }
 }
 
 impl Indexer {
@@ -557,6 +615,14 @@ impl Indexer {
                         connectors.push(SourceConnector {
                             source_id: Some(id),
                             connector: Arc::new(AgentStderrConnector::new(path)),
+                        });
+                    }
+                }
+                "codex" => {
+                    if let Some(path) = source_path {
+                        connectors.push(SourceConnector {
+                            source_id: Some(id),
+                            connector: Arc::new(CodexConnector::new(path)),
                         });
                     }
                 }

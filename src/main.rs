@@ -227,7 +227,7 @@ enum SourcesAction {
 
     /// Add a new source
     Add {
-        /// Source type (journald, syslog, agent_stderr, docker, json)
+        /// Source type (journald, syslog, agent_stderr, codex, docker, json)
         #[arg(long)]
         r#type: String,
 

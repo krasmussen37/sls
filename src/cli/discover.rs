@@ -160,14 +160,28 @@ pub fn discover_sources() -> Vec<DiscoveredSource> {
             });
         }
 
-        // Check Codex TUI log (~/.codex/log/codex-tui.log)
-        let codex_tui_log = home.join(".codex").join("log").join("codex-tui.log");
-        if codex_tui_log.exists() {
+        // Codex has used both a legacy text log and rotating SQLite logs.
+        // Register the stable ~/.codex root so the connector follows rotations.
+        let codex_root = home.join(".codex");
+        let codex_tui_log = codex_root.join("log").join("codex-tui.log");
+        let codex_sqlite_log = fs::read_dir(&codex_root)
+            .ok()
+            .into_iter()
+            .flatten()
+            .filter_map(Result::ok)
+            .map(|entry| entry.path())
+            .any(|path| {
+                path.file_name()
+                    .and_then(|name| name.to_str())
+                    .map(|name| name.starts_with("logs_") && name.ends_with(".sqlite"))
+                    .unwrap_or(false)
+            });
+        if codex_tui_log.exists() || codex_sqlite_log {
             sources.push(DiscoveredSource {
-                id: "codex-tui".to_string(),
+                id: "codex".to_string(),
                 source_type: "codex".to_string(),
-                path: Some(codex_tui_log.to_string_lossy().to_string()),
-                description: "Codex CLI TUI log".to_string(),
+                path: Some(codex_root.to_string_lossy().to_string()),
+                description: "Codex CLI logs".to_string(),
                 confidence: 90,
                 selected: false,
             });

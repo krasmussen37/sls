@@ -15,8 +15,11 @@ cargo run -- <command>
 Common first steps:
 
 ```bash
-# Discover log sources on this machine
+# Discover and register high-confidence log sources on this machine
 sls discover --auto
+
+# Or register current/legacy Codex logs explicitly
+sls sources add --type codex --path ~/.codex
 
 # Index sources (one-shot)
 sls index
@@ -35,7 +38,7 @@ sls search "error" --since 1h
 - `discover` - scan the machine for log sources (`--auto`)
 - `coverage` - compare discovered/indexed sources against a service catalog
 - `config` - view and update SLS configuration
-- `sources` - list/add/remove log sources (add/remove are stubbed today)
+- `sources` - list/add/remove log sources
 - `normalize` - convert arbitrary logs into the SLS schema
 - `capabilities` - machine-readable capability listing
 - `mcp` - run SLS as an MCP server
