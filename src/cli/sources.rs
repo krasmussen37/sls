@@ -88,7 +88,15 @@ pub async fn add(
     let db = Database::open(&db_path)?;
 
     // Validate source type
-    let valid_types = vec!["journald", "syslog", "agent_stderr", "docker", "json", "file"];
+    let valid_types = vec![
+        "journald",
+        "syslog",
+        "agent_stderr",
+        "codex",
+        "docker",
+        "json",
+        "file",
+    ];
     if !valid_types.contains(&source_type.as_str()) {
         anyhow::bail!(
             "Invalid source type: {}. Valid types: {}",

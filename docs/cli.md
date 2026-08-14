@@ -105,6 +105,19 @@ When you change `discovery-mode`, SLS prints setup hints for cron or systemd.
 
 ## Notes on `sources`
 
-`sls sources list` prints a quick view of configured sources.
-`sls sources add` and `sls sources remove` are present but currently print
-"not implemented" responses.
+`sls sources list` prints a quick view of configured sources. Add and remove
+operate on the source registry; removal is a soft delete that preserves indexed
+history.
+
+Codex should be registered at its stable root so SLS follows rotating SQLite
+logs and retains compatibility with the legacy text log:
+
+```bash
+sls sources add --type codex --path ~/.codex
+sls index
+sls search "parallel-search" --service codex --since 1d
+```
+
+The Codex connector normalizes selected warnings, errors, and MCP lifecycle
+events into the same `LogEntry` structure used by the other connectors before
+they enter the shared index.
